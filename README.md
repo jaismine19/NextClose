@@ -2,9 +2,6 @@
 
 **CSIS 4260 — Assignment 1** · Student: **Jaismine Kaur**
 
-**Repository:** https://github.com/jaismine19/NextClose (public — anyone can read
-it; this is the submission link for saleemn@douglascollege.ca)
-
 This assignment took me through the whole journey of working with stock data:
 deciding how to store it, how to analyze it quickly, how to build two prediction
 models, and finally how to put everything into a dashboard that people can
