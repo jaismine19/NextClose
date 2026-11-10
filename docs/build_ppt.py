@@ -133,7 +133,7 @@ def fmt_s(x):
 s = prs.slides.add_slide(BLANK)
 tb = s.shapes.add_textbox(Inches(0.9), Inches(2.2), Inches(11.5), Inches(1.6))
 tf = tb.text_frame
-tf.text = "CloseCall \u2014 S&P 500 next-day price predictor"
+tf.text = "NextClose \u2014 S&P 500 next-day close predictor"
 tf.paragraphs[0].font.size = Pt(44)
 tf.paragraphs[0].font.bold = True
 tf.paragraphs[0].font.color.rgb = DARK

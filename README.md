@@ -1,8 +1,8 @@
-# CloseCall — predicting the next day's close for 505 S&P 500 companies
+# NextClose — predicting the next day's closing price for 505 S&P 500 companies
 
 **CSIS 4260 — Assignment 1** · Student: **Jaismine Kaur**
 
-**Repository:** https://github.com/jaismine19/CloseCall (public — anyone can read
+**Repository:** https://github.com/jaismine19/NextClose (public — anyone can read
 it; this is the submission link for saleemn@douglascollege.ca)
 
 This assignment took me through the whole journey of working with stock data:

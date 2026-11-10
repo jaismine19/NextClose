@@ -350,7 +350,7 @@ summary = load_model_summary()
 
 # ---------------- sidebar ----------------
 with st.sidebar:
-    st.title("\U0001F4C8 CloseCall")
+    st.title("\U0001F4C8 NextClose")
     st.caption("CSIS 4260 \u2014 Assignment 1 \u2014 Part 3 \u00b7 Jaismine Kaur")
     st.markdown("---")
     search = st.text_input("\U0001F50D Search ticker", value="", placeholder="e.g. AAPL")
@@ -409,7 +409,7 @@ st.markdown(
     f"""
     <div class="hero">
         <h1>{ticker} \u2014 Price Prediction Dashboard</h1>
-        <p>CloseCall \u00b7 next-day close predictor \u00b7 daily OHLCV from {dates[0]} to {dates[-1]} \u00b7
+        <p>NextClose \u00b7 next-day close predictor \u00b7 daily OHLCV from {dates[0]} to {dates[-1]} \u00b7
         {history.height:,} trading days \u00b7 backtested on the last 20% of trading days \u00b7
         built with Streamlit + Plotly</p>
     </div>
