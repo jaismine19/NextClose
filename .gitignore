@@ -1,0 +1,17 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Temporary benchmark files (10x / 100x simulated datasets are deleted
+# automatically after each run; nothing big should ever be committed)
+benchmarks/tmp_scale/
+
+# Generated screenshot binaries are committed as part of the docs
+# (they are referenced by the PPTX), but can be regenerated:
+# docs/screenshots/

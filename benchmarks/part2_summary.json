@@ -1,0 +1,58 @@
+{
+  "overall": {
+    "LinearRegression": {
+      "rmse": 0.7248743647866772,
+      "mae": 0.33612081160665974,
+      "r2": 0.9999676399946263
+    },
+    "RandomForest": {
+      "rmse": 11.579261377393417,
+      "mae": 0.6530435598698566,
+      "r2": 0.9917425715862657
+    }
+  },
+  "n_train": 486870,
+  "n_test": 125598,
+  "train_date_range": [
+    "2013-02-28",
+    "2017-02-09"
+  ],
+  "test_date_range": [
+    "2017-02-10",
+    "2018-02-07"
+  ],
+  "split_date": "2017-02-10",
+  "features": [
+    "open",
+    "high",
+    "low",
+    "volume",
+    "sma10",
+    "macd",
+    "macd_signal",
+    "rsi",
+    "close_lag1",
+    "ret1"
+  ],
+  "feature_importance_rf": {
+    "high": 0.6140907868374533,
+    "low": 0.3812619245568343,
+    "open": 0.0045840276255456084,
+    "ret1": 3.958551776448825e-05,
+    "close_lag1": 1.2863714464620411e-05,
+    "sma10": 6.511102480888724e-06,
+    "rsi": 2.073326199524596e-06,
+    "volume": 8.608086326930859e-07,
+    "macd_signal": 7.070722647007614e-07,
+    "macd": 6.594383598095387e-07
+  },
+  "indicators": {
+    "SMA10": "10-day simple moving average of close",
+    "MACD": "EMA12 - EMA26 with 9-day signal line",
+    "RSI14": "Wilder relative strength index (14-day)"
+  },
+  "models": {
+    "LinearRegression": "Ridge-free OLS with StandardScaler",
+    "RandomForest": "120 trees, max_depth=20, min_samples_leaf=5"
+  }
+}

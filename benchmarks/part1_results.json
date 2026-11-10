@@ -1,0 +1,60 @@
+{
+  "dataset": "/Users/jazmingill/CSIS4260_Assignment1/data/all_stocks_5yr.csv",
+  "notes": "10x/100x files simulated by tiling 1x data; temp files deleted after run. CSV written with pandas, Parquet written with pyarrow (row-group append). Reads measured with pandas (plus polars for reference).",
+  "results": [
+    {
+      "scale": 1,
+      "n_rows": 619040,
+      "csv_write_s": 0.5838804999948479,
+      "csv_size_mb": 29.580549,
+      "parquet_snappy_write_s": 0.05888466699980199,
+      "parquet_snappy_size_mb": 10.268035,
+      "parquet_zstd_write_s": 0.06441941700177267,
+      "parquet_zstd_size_mb": 8.50085,
+      "parquet_gzip_write_s": 0.1543235419667326,
+      "parquet_gzip_size_mb": 8.638073,
+      "csv_read_pandas_s": 0.09612220898270607,
+      "parquet_snappy_read_pandas_s": 0.006112958013545722,
+      "parquet_zstd_read_pandas_s": 0.006656125013250858,
+      "parquet_gzip_read_pandas_s": 0.013786791998427361,
+      "csv_read_polars_s": 0.014354958024341613,
+      "parquet_zstd_read_polars_s": 0.015584875014610589
+    },
+    {
+      "scale": 10,
+      "n_rows": 6190400,
+      "csv_write_s": 5.977060584002174,
+      "csv_size_mb": 295.805157,
+      "parquet_snappy_write_s": 0.6000936659984291,
+      "parquet_snappy_size_mb": 102.648257,
+      "parquet_zstd_write_s": 0.680225416959729,
+      "parquet_zstd_size_mb": 84.976407,
+      "parquet_gzip_write_s": 2.213918333000038,
+      "parquet_gzip_size_mb": 86.348637,
+      "csv_read_pandas_s": 1.0639957090024836,
+      "parquet_snappy_read_pandas_s": 0.06056695803999901,
+      "parquet_zstd_read_pandas_s": 0.04236412496538833,
+      "parquet_gzip_read_pandas_s": 0.07663429103558883,
+      "csv_read_polars_s": 0.17846762499539182,
+      "parquet_zstd_read_polars_s": 0.07390541699714959
+    },
+    {
+      "scale": 100,
+      "n_rows": 61904000,
+      "csv_write_s": 60.91334954201011,
+      "csv_size_mb": 2958.051237,
+      "parquet_snappy_write_s": 5.871622333012056,
+      "parquet_snappy_size_mb": 1026.45177,
+      "parquet_zstd_write_s": 6.619397209025919,
+      "parquet_zstd_size_mb": 849.73323,
+      "parquet_gzip_write_s": 15.702572583046276,
+      "parquet_gzip_size_mb": 863.455533,
+      "csv_read_pandas_s": 10.286666750034783,
+      "parquet_snappy_read_pandas_s": 1.2895821669953875,
+      "parquet_zstd_read_pandas_s": 1.156748040986713,
+      "parquet_gzip_read_pandas_s": 0.963768582965713,
+      "csv_read_polars_s": 2.241919624968432,
+      "parquet_zstd_read_polars_s": 0.6918113330029882
+    }
+  ]
+}
