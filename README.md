@@ -1,10 +1,9 @@
-# CSIS 4260 — Assignment 1
-## Storing, Analyzing and Visualizing S&P 500 Stock Data
+# CloseCall — predicting the next day's close for 505 S&P 500 companies
 
-**Repository:** https://github.com/jaismine19/CSIS4260_Assignment1 (public — anyone
-can read it; this is the submission link for saleemn@douglascollege.ca)
+**CSIS 4260 — Assignment 1** · Student: **Jaismine Kaur**
 
-Student: **Jaismine Kaur**
+**Repository:** https://github.com/jaismine19/CloseCall (public — anyone can read
+it; this is the submission link for saleemn@douglascollege.ca)
 
 This assignment took me through the whole journey of working with stock data:
 deciding how to store it, how to analyze it quickly, how to build two prediction

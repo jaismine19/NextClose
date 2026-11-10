@@ -133,13 +133,13 @@ def fmt_s(x):
 s = prs.slides.add_slide(BLANK)
 tb = s.shapes.add_textbox(Inches(0.9), Inches(2.2), Inches(11.5), Inches(1.6))
 tf = tb.text_frame
-tf.text = "CSIS 4260 \u2013 Assignment 1"
-tf.paragraphs[0].font.size = Pt(52)
+tf.text = "CloseCall \u2014 S&P 500 next-day price predictor"
+tf.paragraphs[0].font.size = Pt(44)
 tf.paragraphs[0].font.bold = True
 tf.paragraphs[0].font.color.rgb = DARK
 p = tf.add_paragraph()
-p.text = "Storing, Analyzing & Visualizing S&P 500 Stock Data"
-p.font.size = Pt(24)
+p.text = "CSIS 4260 \u2013 Assignment 1 \u00b7 storing, benchmarking, modeling & visualizing"
+p.font.size = Pt(20)
 p.font.color.rgb = ACCENT
 p = tf.add_paragraph()
 p.text = "Jaismine Kaur \u2022 screenshots, benchmarks & what I found"
