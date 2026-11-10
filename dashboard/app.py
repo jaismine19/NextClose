@@ -165,9 +165,16 @@ def price_chart(df: pl.DataFrame, ticker: str) -> go.Figure:
     fig.add_trace(go.Bar(x=d["date"], y=d["volume"], name="Volume",
                          marker_color=up_color, opacity=0.55), row=2, col=1)
     fig.update_layout(
-        height=640, legend=dict(orientation="h", y=1.06), margin=dict(t=70, b=20),
+        height=640,
+        title=dict(
+            text=f"{ticker} \u2014 Price history: daily candlesticks with SMA(10) / SMA(30)",
+            x=0.01, font=dict(size=16),
+        ),
+        legend=dict(orientation="h", y=1.02), margin=dict(t=80, b=20),
         hovermode="x unified", xaxis_rangeslider_visible=False,
     )
+    fig.update_yaxes(title_text="Price ($)", row=1, col=1)
+    fig.update_yaxes(title_text="Volume (shares)", row=2, col=1)
     fig.update_xaxes(rangeselector=dict(
         buttons=[
             dict(count=1, label="1M", step="month", stepmode="backward"),
@@ -196,8 +203,17 @@ def momentum_chart(df: pl.DataFrame, ticker: str) -> go.Figure:
                              line=dict(color="#1f77b4", width=1.4)), row=2, col=1)
     fig.add_hline(y=70, line_dash="dash", line_color="#c44e52", row=2, col=1)
     fig.add_hline(y=30, line_dash="dash", line_color="#55a868", row=2, col=1)
-    fig.update_layout(height=520, legend=dict(orientation="h", y=1.08),
-                      margin=dict(t=70, b=20), hovermode="x unified")
+    fig.update_layout(
+        height=520,
+        title=dict(
+            text=f"{ticker} \u2014 Momentum indicators: MACD (12, 26, 9) and RSI (14)",
+            x=0.01, font=dict(size=16),
+        ),
+        legend=dict(orientation="h", y=1.02),
+        margin=dict(t=80, b=20), hovermode="x unified",
+    )
+    fig.update_yaxes(title_text="MACD", row=1, col=1)
+    fig.update_yaxes(title_text="RSI", row=2, col=1)
     return fig
 
 
@@ -211,11 +227,18 @@ def backtest_chart(preds: pl.DataFrame, ticker: str, models: list) -> go.Figure:
             x=p["date"], y=p[MODEL_COL[m]], name=f"Predicted \u2014 {m}",
             line=dict(color=MODEL_COLOR[m], width=1.8, dash="dot"),
         ))
-    title = "Backtest: actual vs predicted"
+    title = f"{ticker} \u2014 Backtest: actual vs predicted"
     if len(models) == 1:
-        title += f" \u2014 {models[0]}"
-    fig.update_layout(height=440, title=title, hovermode="x unified",
-                      margin=dict(t=60, b=20), legend=dict(orientation="h", y=1.1))
+        title += f" ({models[0]})"
+    else:
+        title += f" ({' & '.join(models)})"
+    fig.update_layout(
+        height=440,
+        title=dict(text=title, x=0.01, font=dict(size=16)),
+        hovermode="x unified", margin=dict(t=70, b=20),
+        legend=dict(orientation="h", y=1.06),
+    )
+    fig.update_yaxes(title_text="Price ($)")
     return fig
 
 
@@ -227,9 +250,16 @@ def rolling_rmse_chart(preds: pl.DataFrame, ticker: str, models: list) -> go.Fig
         roll = np.sqrt(err2.rolling(20, min_periods=1).mean())
         fig.add_trace(go.Scatter(x=p["date"], y=roll, name=f"{m} (20-day RMSE)",
                                  line=dict(color=MODEL_COLOR[m], width=1.6)))
-    fig.update_layout(height=440, title=f"{ticker} \u2014 rolling 20-day RMSE",
-                      hovermode="x unified", margin=dict(t=60, b=20),
-                      legend=dict(orientation="h", y=1.1))
+    fig.update_layout(
+        height=440,
+        title=dict(
+            text=f"{ticker} \u2014 Rolling 20-day RMSE on the test period",
+            x=0.01, font=dict(size=16),
+        ),
+        hovermode="x unified", margin=dict(t=70, b=20),
+        legend=dict(orientation="h", y=1.06),
+    )
+    fig.update_yaxes(title_text="RMSE ($)")
     return fig
 
 
@@ -250,7 +280,14 @@ def scatter_residual(preds: pl.DataFrame, ticker: str, model: str) -> go.Figure:
                   row=1, col=1)
     fig.add_trace(go.Histogram(x=err, nbinsx=60, marker_color=MODEL_COLOR[model],
                                name="errors"), row=1, col=2)
-    fig.update_layout(height=380, showlegend=False, margin=dict(t=50, b=20))
+    fig.update_layout(
+        height=380,
+        title=dict(
+            text=f"{ticker} \u2014 {model}: predicted vs actual and error distribution",
+            x=0.01, font=dict(size=16),
+        ),
+        showlegend=False, margin=dict(t=60, b=20),
+    )
     fig.update_xaxes(title_text="Actual close", row=1, col=1)
     fig.update_yaxes(title_text="Predicted close", row=1, col=1)
     fig.update_xaxes(title_text="Error (predicted - actual)", row=1, col=2)
@@ -264,8 +301,12 @@ def feature_importance_chart(summary: dict) -> go.Figure:
         marker_color="#2e86c1",
     ))
     fig.update_layout(
-        height=380, title="Random Forest feature importance (top 10, all companies)",
-        margin=dict(t=50, b=20, l=10), xaxis_title="Mean decrease in impurity",
+        height=380,
+        title=dict(
+            text="Random Forest feature importance \u2014 top 10 (all companies)",
+            x=0.01, font=dict(size=16),
+        ),
+        margin=dict(t=60, b=20, l=10), xaxis_title="Mean decrease in impurity",
     )
     return fig
 
@@ -319,11 +360,11 @@ with st.sidebar:
     ticker = st.selectbox("Company ticker", filtered, index=default_idx)
 
     st.markdown("---")
+    radio_options = ["Random Forest", "Linear Regression", "Both"]
     model = st.radio(
         "Prediction model",
-        ["Random Forest", "Linear Regression", "Both"],
-        index=0 if param_model not in ["Linear Regression", "Both"]
-              else ["Linear Regression", "Both"].index(param_model),
+        radio_options,
+        index=radio_options.index(param_model) if param_model in radio_options else 0,
     )
 
     st.markdown("---")
