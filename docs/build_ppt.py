@@ -330,17 +330,5 @@ for fname, caption, bullets in shots:
                     left=0.8, top=2.0, width=5.9, height=4.6, size=16)
         fit_image(s, path, left=6.9, top=1.8, max_w=5.9, max_h=5.5)
 
-# ---------------------------------------------------------------- final slide
-s = add_slide("How to run it & where everything lives", "")
-add_bullets(s, [
-    ("python3 -m venv .venv && .venv/bin/pip install -r requirements.txt", 0, False),
-    (".venv/bin/python part1_storage_benchmark.py      # Part 1 benchmarks", 0, False),
-    (".venv/bin/python part2_analysis_models.py        # Part 2 models + metrics", 0, False),
-    (".venv/bin/streamlit run dashboard/app.py         # Part 3 dashboard", 0, False),
-    (".venv/bin/python docs/build_ppt.py               # rebuild this deck", 0, False),
-    ("Repository: https://github.com/jaismine19/CSIS4260_Assignment1 (public \u2014 read access; shared with saleemn@douglascollege.ca)", 0, False),
-    ("The full write-up and reasoning: README.md", 0, False),
-])
-
 prs.save(OUT_PPTX)
 print(f"Saved {OUT_PPTX}")
