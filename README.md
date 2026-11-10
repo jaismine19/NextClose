@@ -1,20 +1,20 @@
 # CSIS 4260 — Assignment 1
 ## Storing, Analyzing and Visualizing S&P 500 Stock Data
 
-**Repository:** https://github.com/jaismine19/CSIS4260_Assignment1 (public — read
-access is open to everyone; this is the submission link for saleemn@douglascollege.ca)
+**Repository:** https://github.com/jaismine19/CSIS4260_Assignment1 (public — anyone
+can read it; this is the submission link for saleemn@douglascollege.ca)
 
 Student: **Jaismine Kaur**
 
-This assignment walked me through the whole pipeline of working with stock data:
-deciding how to store it, how to analyze it quickly, how to build a couple of
-prediction models on it, and finally how to wrap all of that into a dashboard that
-a person can actually use. Below is what I did for each part, why I did it that
-way, and how to run everything yourself.
+This assignment took me through the whole journey of working with stock data:
+deciding how to store it, how to analyze it quickly, how to build two prediction
+models, and finally how to put everything into a dashboard that people can
+actually use. Below is what I did for each part, why I did it that way, and how
+you can run everything yourself.
 
-The dataset is `data/all_stocks_5yr.csv` — daily open/high/low/close/volume for
-**505 S&P 500 companies** from 2013-02-08 to 2018-02-07, which works out to
-**619,040 rows** and about 29 MB.
+The dataset is `data/all_stocks_5yr.csv`. It holds daily prices (open, high, low,
+close) and volume for **505 S&P 500 companies**, from 2013-02-08 to 2018-02-07.
+That is **619,040 rows** in total, about 29 MB.
 
 | Part | What it covers | Code | What it produces |
 |------|----------------|------|------------------|
@@ -26,37 +26,37 @@ The dataset is `data/all_stocks_5yr.csv` — daily open/high/low/close/volume fo
 
 ## Setup (virtual environment)
 
-Everything runs in a Python 3.13 virtual environment. From the project root:
+Everything runs in a Python 3.13 virtual environment. From the project folder:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-`requirements.txt` is the file the venv tooling generated for me (`pip freeze`),
-so it pins every dependency and the grader can reproduce my exact environment.
+`requirements.txt` is the dependency file my venv tool generated for me
+(`pip freeze`). It pins every package, so the grader can recreate my exact setup.
 
 ### Part 1 — storage benchmark
 ```bash
 .venv/bin/python part1_storage_benchmark.py
 ```
-> A note on the 10x and 100x datasets: since I'm not allowed to include those
-> files, the script **simulates them by tiling the 1x data**, writes them to a
-> temporary folder, and **deletes them automatically** when it's done. Nothing
-> large is ever left behind or committed.
+> A note on the 10x and 100x datasets: I am not allowed to include those files,
+> so the script **pretends the data grew by copying the 1x data 10 or 100 times**.
+> It writes the big files to a temporary folder and **deletes them automatically**
+> when it finishes. Nothing large is ever left behind or committed.
 
 ### Part 2 — analysis + models
 ```bash
 .venv/bin/python part2_analysis_models.py
 ```
-This generates the predictions and per-ticker metrics that the dashboard reads.
+This creates the predictions and per-company metrics that the dashboard reads.
 
 ### Part 3 — dashboard
 ```bash
 .venv/bin/streamlit run dashboard/app.py
 ```
-Then open http://localhost:8501. Search any ticker in the sidebar (e.g. `AAPL`).
-You can also deep-link straight to a ticker and model:
+Then open http://localhost:8501. Search any ticker in the sidebar (for example
+`AAPL`). You can also jump straight to a ticker and model with a link:
 `/?ticker=AAPL&model=Random%20Forest`.
 
 ### Regenerating the screenshots / slides
@@ -71,38 +71,41 @@ You can also deep-link straight to a ticker and model:
 
 ### The thinking
 
-The assignment asks whether to keep the data as the CSV it came in or convert it
-to Parquet, and to back that up with benchmarks at 1x, 10x and 100x scale.
+The assignment asks: should the data stay as a CSV, or should I convert it to
+Parquet? And it asks me to prove the answer with benchmarks at 1x, 10x and 100x
+scale.
 
-My understanding going in was:
+Here is what I knew going in:
 
-* **CSV** is row-oriented, uncompressed text. Every read has to parse every byte
-  of every line, and string values have to be type-inferred on the way in. It's
-  human-readable, which is nice, but nothing about it is optimized for machines.
-* **Parquet** (Apache Arrow / `pyarrow`) is **column-oriented and binary**, with
-  per-column encoding and built-in compression. Files are much smaller, a schema
-  is stored inside the file (so no guessing types at read time), and you only
-  decode the columns you actually ask for.
+* **CSV** is plain text, one line per row, no compression. Every time you read it,
+  the program has to read every single byte and guess whether each column is text
+  or a number. It is easy for humans to read, but nothing about it is built for
+  speed or size.
+* **Parquet** (Apache Arrow / `pyarrow`) stores data **column by column** instead
+  of row by row, in a compact binary form with built-in compression. Files are
+  much smaller, the column types are saved inside the file (no guessing at read
+  time), and you can read just the columns you need.
 
-I tested three compression codecs, since the assignment asked about compression
-schemes:
+I also tested three compression options, since the assignment asked about
+compression:
 
 | Codec | Why I tested it |
 |-------|-----------------|
-| `snappy` | Parquet's default — extremely fast, decent ratio |
-| `zstd`  | usually the best size/speed balance, fast decompression |
-| `gzip`  | slightly better ratio, slower; I used level 1 to stay realistic |
+| `snappy` | Parquet's default — very fast, decent size savings |
+| `zstd`  | usually the best balance of speed and size |
+| `gzip`  | a bit smaller, but slower; I used level 1 to keep it realistic |
 
 ### How I measured
 
 For each scale (1x = 619,040 rows, 10x = 6,190,400, 100x = 61,904,000) I measured:
 
-1. **Write time** — CSV written with pandas (append mode), Parquet written with
-   `pyarrow.parquet.ParquetWriter` appending row groups. Both approaches keep
-   memory constant, so neither side gets an unfair memory advantage.
+1. **Write time** — saving the file.
 2. **File size** on disk.
-3. **Read time** — a full load into memory with pandas, plus polars reads as an
-   extra data point (it sets up Part 2 nicely).
+3. **Read time** — loading the whole file back into memory with pandas (plus a
+   polars read as a bonus data point, which sets up Part 2).
+
+Both formats were written in a way that keeps memory constant, so neither side
+got an unfair advantage.
 
 ### What I found
 
@@ -128,22 +131,21 @@ Charts: `benchmarks/part1_charts.png`.
 
 ### My recommendation
 
-* **At 1x**, honestly, CSV is fine — everything is sub-second and you can open it
-  in any editor. There's no *need* to convert, but Parquet/zstd costs nothing and
-  already saves 3.5x on disk.
-* **At 10x** the gap stops being cosmetic: Parquet writes ~9x faster and reads
-  15–25x faster.
-* **At 100x** it's basically a decision made for you. Writing the CSV takes about
-  61 seconds versus ~6.6 seconds for Parquet/zstd; reading it back with pandas
-  takes ~10 seconds versus ~1.2 seconds (polars gets the Parquet read down to
-  ~0.7s); and the file shrinks from ~3.0 GB to ~0.85 GB.
+* **At 1x**, to be honest, CSV is fine. Everything takes less than a second and
+  you can open the file in any editor. There is no *need* to convert, but
+  Parquet/zstd costs nothing and already saves 3.5x on disk.
+* **At 10x** the difference stops being cosmetic. Parquet writes about 9x faster
+  and reads 15–25x faster.
+* **At 100x** the choice makes itself. Writing the CSV takes about 61 seconds;
+  Parquet/zstd takes about 6.6 seconds. Reading the CSV with pandas takes about
+  10 seconds; Parquet takes about 1.2 seconds (polars reads Parquet in ~0.7s).
+  And the file shrinks from ~3.0 GB to ~0.85 GB.
 
-So my choice: **store the analytics data as Parquet with zstd compression**.
-zstd gave me the best size/speed balance in my runs — snappy writes a touch
-faster, but zstd is smaller and reads just as fast. The original CSV stays around
-as the ingestion/source format only. Bonus point: as the data grows, Parquet lets
-you read individual columns and push filters down to the file level, which CSV
-simply cannot do.
+So my choice: **keep the data as Parquet with zstd compression**. In my runs zstd
+gave the best size/speed balance — snappy writes a touch faster, but zstd is
+smaller and reads just as fast. The original CSV stays around as the source file
+only. One more bonus: as the data grows, Parquet can read only the columns it
+needs and skip parts of the file, which CSV simply cannot do.
 
 ---
 
@@ -151,33 +153,31 @@ simply cannot do.
 
 ### Why compare these two libraries?
 
-* **Pandas** is the library everyone learns first. It's NumPy-backed, but a lot
-  of per-group work falls back to Python-level loops — the classic example is
-  `groupby(...).transform(lambda ...)`, which runs a Python callback once per
-  group (505 times here).
-* **Polars** is a Rust-based engine with a lazy query optimizer, vectorized
-  kernels and real multithreading. Expressions like
-  `pl.col("close").rolling_mean(10).over("name")` compile into one optimized
-  plan instead of 505 Python callbacks.
+* **Pandas** is the library everyone learns first. It is built on NumPy, but many
+  group-by-group tasks fall back to running a Python function 505 times (once per
+  company). That gets slow.
+* **Polars** is a Rust-based engine. It plans the whole calculation up front and
+  runs it on multiple cores at once, working on whole columns in one go. One
+  expression like `pl.col("close").rolling_mean(10).over("name")` replaces
+  505 Python function calls.
 
-On 619k rows both libraries feel fast, but the whole point of this assignment is
-that the data will grow 10x and 100x, and the benchmark below shows which one
-scales better.
+On 619k rows both feel fast. But this assignment assumes the data will grow 10x
+and 100x, and the benchmark below shows which one handles that better.
 
 ### The indicators I added
 
 | Indicator | Formula | Why it's useful |
 |-----------|---------|-----------------|
-| SMA(10) | 10-day simple moving average of close | shows trend direction |
-| MACD(12,26,9) | EMA12 − EMA26, plus 9-day signal line + histogram | catches momentum shifts |
+| SMA(10) | 10-day simple moving average of close | shows the trend direction |
+| MACD(12,26,9) | EMA12 − EMA26, plus a 9-day signal line + histogram | catches momentum shifts |
 | RSI(14) | Wilder's relative strength index of daily gains/losses | flags overbought/oversold |
 
-I also added a **1-day return** column. One design decision worth calling out:
-because the models predict the *next* day's close, I lagged **every** feature by
-one day — the model only ever sees information that existed at the close of day
-t−1. No look-ahead leakage. I implemented the indicators identically in pandas
-and polars and verified the two engines agree to ~1e-4 (which is just float32
-rounding noise).
+I also added a **1-day return** column. One design decision worth mentioning:
+because the models predict the *next* day's close, I shifted **every** feature by
+one day. The model only sees information that existed at the end of day t−1.
+No cheating (no look-ahead). I wrote the indicators the same way in pandas and
+polars and checked that both give the same numbers (they agree to ~1e-4, which
+is just rounding noise).
 
 ### Pandas vs Polars timings (619,040 rows)
 
@@ -188,28 +188,28 @@ rounding noise).
 | Lag features + cleanup | 0.031 | 0.010 | 3.1x |
 | **Total data prep** | **0.277** | **0.054** | **5.1x** |
 
-Chart: `benchmarks/part2_charts.png`. The NumPy matrices I fed to scikit-learn
-were verified to be identical between the two engines. Model training itself
-doesn't care which engine prepared the data: Linear Regression took 0.04 s,
-Random Forest took 67 s.
+Chart: `benchmarks/part2_charts.png`. The data I fed to scikit-learn was
+verified to be identical from both engines. Training itself does not care which
+engine prepared the data: Linear Regression took 0.04 s, Random Forest took 67 s.
 
 ### The models
 
-I trained two algorithms to predict the next-day closing price for all 505
-companies, both on the **one-day log-return** (standard practice for prices —
-returns are stationary and comparable across tickers). The dollar forecast is
-recovered as `close(t-1) × exp(ŕ)`:
+I trained two models to predict the next-day closing price for all 505 companies.
+Both predict the **daily percent change** instead of the dollar price (the usual
+way to do this — percent changes behave the same across companies, dollar prices
+do not). The dollar forecast is then just yesterday's close plus that change.
 
-1. **Linear Regression** with `StandardScaler` — simple, fast, and it extrapolates
-   gracefully, which turned out to matter (see below).
-2. **Random Forest** (120 trees, `max_depth=20`, `min_samples_leaf=5`) — captures
-   non-linear relationships between the lagged prices and indicators.
+1. **Linear Regression** (with `StandardScaler`) — simple, fast, and it handles
+   prices outside the range it has seen before, which turned out to matter (see
+   the story below).
+2. **Random Forest** (120 trees, `max_depth=20`, `min_samples_leaf=5`) — catches
+   non-linear patterns between the lagged prices and indicators.
 
-The split is **chronological**: sorted by date, first 80% of trading days train
-the model, last 20% backtest it. No shuffling, so there's no way for future
-information to leak into training. Features (all lagged one day): `open_l1,
-high_l1, low_l1, volume_l1, sma10_l1, macd_l1, macd_signal_l1, rsi_l1, close_l1,
-ret1_l1`.
+The split is **chronological**: I sorted by date and used the first 80% of
+trading days to train, the last 20% to test (backtesting). No shuffling, so no
+future information can sneak into training. Features (all shifted one day):
+`open_l1, high_l1, low_l1, volume_l1, sma10_l1, macd_l1, macd_signal_l1, rsi_l1,
+close_l1, ret1_l1`.
 
 ### How they did (test period, all companies)
 
@@ -218,41 +218,43 @@ ret1_l1`.
 | Linear Regression | **2.241** | **0.908** | 0.99969 | 0.950 | 335 / 505 |
 | Random Forest     | 2.260 | 0.912 | 0.99969 | 0.951 | 170 / 505 |
 
-Metrics are in dollars after back-transforming the log-return predictions.
+RMSE = average error in dollars (bigger = worse). MAE = average absolute error.
+R² = how much of the price movement the model explains (1.0 would be perfect).
 Train rows: 486,870 (through 2017-02-10). Test rows: 125,093 (2017-02-13 →
 2018-02-07).
 
 **Feature importance (Random Forest, top 5):** `ret1_l1` 0.18, `volume_l1` 0.15,
 `rsi_l1` 0.14, `macd_signal_l1` 0.14, `macd_l1` 0.13. Yesterday's return, volume
-and the momentum indicators carry the signal — which fits the near-random-walk
-behaviour of daily prices.
+and the momentum indicators carry the signal — which makes sense, because daily
+prices are almost a random walk.
 
 ### A mistake I caught (and fixed) along the way
 
-My first version of the model used the *same day's* open/high/low as features —
-which made the "next-day" prediction trivially easy (the close is almost always
-inside the day's range). That's look-ahead leakage, so I rebuilt it with
-everything lagged one day.
+My first version used the *same day's* open/high/low as features. That made the
+"next-day" prediction trivially easy, because the close is almost always inside
+the day's range. It was look-ahead leakage (cheating), so I rebuilt it with every
+feature shifted one day back.
 
-The second issue was more interesting. When I trained on **dollar prices**
-directly, Random Forest looked terrible overall (RMSE ~11.6 vs ~2.2 for LR) even
-though it was fine on most tickers. The culprit was Priceline (PCLN, ~$1,880):
-its test-period price ran about 20% above anything seen in training, and tree
-leaves can only predict the average of the training prices in a leaf — they can't
-extrapolate. Linear Regression just kept extrapolating linearly. Switching the
-target to the **log-return** fixed it: PCLN's RF RMSE went from $255 to $27.
+The second problem was more interesting. When I trained on **dollar prices**
+directly, Random Forest looked terrible overall (RMSE ~11.6 vs ~2.2 for LR), even
+though it was fine on most companies. The culprit was Priceline (PCLN, ~$1,880):
+its test-period price ran about 20% above anything seen in training. A decision
+tree can only guess the average price of its training examples — it cannot guess
+beyond them. Linear Regression, on the other hand, just kept drawing the straight
+line. Switching to the **percent change** fixed it: PCLN's RF error dropped from
+$255 to $27.
 
 ### Part 2 verdict
 
-* **Polars is the better engine for this workload.** Identical results ~5x faster,
-  with expressions that are honestly easier to read than pandas lambdas. And the
-  gap only widens at 10x/100x.
-* **The two models end up nearly tied** at ~0.9997 R² — next-day close is
-  overwhelmingly yesterday's close. Linear Regression wins outright on 335/505
-  tickers, trains in 0.04 s versus 67 s, and handles out-of-range prices safely.
-* **Recommendation:** scaled Linear Regression with a log-return target as the
-  primary model for this dataset. Random Forest is a solid secondary model and
-  would pull ahead if I added non-linear features like sector or sentiment data.
+* **Polars is the better engine here.** Same results, about 5x faster, and the
+  expressions are honestly easier to read than pandas lambdas. The gap only gets
+  bigger at 10x/100x.
+* **The two models end up nearly tied** at R² ≈ 0.9997 — tomorrow's close is
+  mostly today's close. Linear Regression wins outright on 335/505 companies,
+  trains in 0.04 s instead of 67 s, and handles out-of-range prices safely.
+* **Recommendation:** scaled Linear Regression on the percent change as the main
+  model for this dataset. Random Forest is a good second model and would pull
+  ahead if I added non-linear features like sector or news sentiment data.
 
 ---
 
@@ -262,15 +264,15 @@ target to the **log-return** fixed it: PCLN's RF RMSE went from $255 to $27.
 
 | Library | How it works | What I liked | What I didn't |
 |---------|--------------|--------------|---------------|
-| **Streamlit** | plain Python script, top-down reruns | fastest to build, `@st.cache_data` caching, native Plotly, free hosting | limited fine-grained interactivity |
+| **Streamlit** | plain Python script, reruns top to bottom | fastest to build, built-in caching, native Plotly, free hosting | limited fine-grained interactivity |
 | **Dash** | Flask + React callbacks | full Plotly ecosystem, production-grade | callbacks add boilerplate; steeper learning curve |
 | **Reflex** | Python compiled to React | very flexible components | younger ecosystem, more setup |
 
-I went with **Streamlit**. The assignment needs a ticker-searchable page with a
+I went with **Streamlit**. The assignment needs a page with ticker search and a
 handful of linked charts — Streamlit does that in the least code, its caching
-handles the 30 MB CSV nicely, and the grader can run and verify it with one
-command. Dash and Reflex are great tools, but they'd add ceremony without adding
-value for this particular dashboard.
+handles the 30 MB CSV nicely, and the grader can run and check it with one
+command. Dash and Reflex are great tools, but they would add extra setup without
+adding value for this particular dashboard.
 
 ### What the dashboard shows
 
