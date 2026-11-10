@@ -293,7 +293,7 @@ add_bullets(s, [
     (".venv/bin/python part2_analysis_models.py        # Part 2 models + metrics", 0, False),
     (".venv/bin/streamlit run dashboard/app.py         # Part 3 dashboard", 0, False),
     (".venv/bin/python docs/build_ppt.py               # rebuild this deck", 0, False),
-    ("Repository: <github link> (invited: saleemn@douglascollege.ca)", 0, False),
+    ("Repository: https://github.com/jaismine19/CSIS4260_Assignment1 (public \u2014 read access; shared with saleemn@douglascollege.ca)", 0, False),
     ("Full analysis and reasoning: README.md", 0, False),
 ])
 

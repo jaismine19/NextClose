@@ -1,6 +1,9 @@
 # CSIS 4260 — Assignment 1
 ## Storing, Analyzing and Visualizing S&P 500 Stock Data
 
+**Repository:** https://github.com/jaismine19/CSIS4260_Assignment1 (public — read
+access granted to everyone; the submission link for saleemn@douglascollege.ca)
+
 Student: **Jazmine Gill**  
 Dataset: `data/all_stocks_5yr.csv` — daily OHLCV for **505 S&P 500 companies**, 2013-02-08 → 2018-02-07 (**619,040 rows**, ~29 MB).
 
