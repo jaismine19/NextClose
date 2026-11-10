@@ -153,41 +153,79 @@ assignment.
 | MACD(12,26,9) | EMA12 − EMA26, with 9-day signal line + histogram | Momentum / trend changes |
 | RSI(14) | Wilder's relative strength index of daily gains/losses | Overbought/oversold |
 
-Plus two engineered features used by the models: **1-day lagged close** and
-**1-day return**. All indicators are computed identically in pandas and polars and
-the two engines were verified to agree to ~1e-5 (float32 rounding).
+Plus a **1-day return** column. To make the forecast a true *next-day*
+prediction, **every feature is lagged by one day**: the models see only
+information available at the close of day t−1 (yesterday's OHLC, volume,
+indicators, close and return) to predict the close of day t — no look-ahead
+leakage. All indicators are computed identically in pandas and polars and
+the two engines were verified to agree to ~1e-4 (float32 rounding).
 
 ### Pandas vs Polars benchmark (619,040 rows)
 
-{{P2_TABLE}}
+| Stage | pandas (s) | polars (s) | Speedup |
+|-------|-----------:|-----------:|--------:|
+| Load CSV | 0.103 | 0.018 | 5.7x |
+| 3 indicators (SMA/MACD/RSI) | 0.143 | 0.026 | 5.4x |
+| Lag features + cleanup | 0.031 | 0.010 | 3.1x |
+| **Total data prep** | **0.277** | **0.054** | **5.1x** |
 
 Chart: `benchmarks/part2_charts.png`. The final NumPy matrices fed to scikit-learn
-were verified to be identical between the two engines.
+were verified to be identical between the two engines (max deviation ~1e-4, i.e.
+float32 rounding). Model training itself is engine-independent: LinearRegression
+0.04 s, Random Forest 67 s.
 
 ### Prediction models (80/20 chronological backtesting)
 
-Two algorithms predict the **next-day closing price** for all 505 companies:
+Two algorithms predict the **next-day closing price** for all 505 companies.
+Both are trained on the **one-day log-return** (standard practice for prices:
+stationary, comparable across tickers, avoids heteroscedasticity), and the dollar
+forecast is recovered as `close(t-1) × exp(ŕ)`:
 
 1. **Linear Regression** (with `StandardScaler`) — simple, fast, interpretable
-   baseline. Price levels differ enormously across companies, so scaling is
-   essential for OLS.
+   baseline that extrapolates gracefully in price space.
 2. **Random Forest** (120 trees, `max_depth=20`, `min_samples_leaf=5`) — captures
    non-linear interactions between lagged prices and indicators.
 
 The split is **chronological**: rows are sorted by date and the first 80% of trading
 days train the models, the last 20% backtest them (no shuffling → no look-ahead
-leakage). Features: `open, high, low, volume, sma10, macd, macd_signal, rsi,
-close_lag1, ret1`.
+leakage). Features (all lagged one day): `open_l1, high_l1, low_l1, volume_l1,
+sma10_l1, macd_l1, macd_signal_l1, rsi_l1, close_l1, ret1_l1`.
 
 ### Model results (test period, all companies)
 
-{{P2_MODEL_TABLE}}
+| Model | Overall RMSE ($) | Overall MAE ($) | Overall R² | Median per-ticker RMSE ($) | Tickers where it wins (lower RMSE) |
+|-------|-----------------:|----------------:|-----------:|---------------------------:|-----------------------------------:|
+| Linear Regression | **2.241** | **0.908** | 0.99969 | 0.950 | 335 / 505 |
+| Random Forest     | 2.260 | 0.912 | 0.99969 | 0.951 | 170 / 505 |
 
-{{P2_FEATURE_IMPORTANCE}}
+Metrics are in dollars after back-transforming the log-return predictions.
+Train rows 486,870 (through 2017-02-10), test rows 125,093 (2017-02-13 → 2018-02-07).
+
+**Feature importance (Random Forest, top 5):** `ret1_l1` 0.18, `volume_l1` 0.15,
+`rsi_l1` 0.14, `macd_signal_l1` 0.14, `macd_l1` 0.13 — yesterday's return, volume
+and momentum indicators carry the signal, which is consistent with the near
+random-walk behaviour of daily prices.
 
 ### Conclusion of Part 2
 
-{{P2_CONCLUSION}}
+* **Polars is the better engine for this workload.** It produced *bit-identical*
+  results ~5x faster with far less code (a single expression per indicator vs
+  pandas `groupby(...).transform(lambda ...)` Python callbacks). The gap grows with
+  data size, so for the 10x/100x scale-up polars is the clear choice.
+* **Both models are nearly tied** at ~0.9997 R² — next-day close is overwhelmingly
+  determined by today's close. Linear Regression wins outright on 335/505 tickers,
+  trains in 0.04 s (vs 67 s for the forest) and extrapolates safely when a stock
+  trades outside its training price range (Priceline/PCLN at ~$1,880 grew ~20%
+  beyond its training maximum — an early dollar-target experiment showed Random
+  Forest RMSE of $255 vs $26 for LR there, because tree leaves cannot extrapolate).
+* **Design decision:** models predict the **1-day log-return**, and the dollar
+  forecast is `close(t-1) × exp(ŕ)`. This is standard for price series: returns are
+  stationary and comparable across tickers, and it prevents the heteroscedastic
+  blow-up above.
+* **Recommendation:** Linear Regression (scaled, log-return target) as the primary
+  model for this dataset — comparable accuracy, 1,500x cheaper to train, fully
+  interpretable coefficients; Random Forest remains a strong secondary model and
+  would pull ahead if non-linear features (e.g. sector data, sentiment) were added.
 
 ---
 

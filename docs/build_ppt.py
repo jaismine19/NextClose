@@ -208,7 +208,7 @@ rows.append(["Total", fmt_s(pd_total), fmt_s(pl_total), f"{pd_total / pl_total:.
 add_table(s, rows, 1.2, 1.8, 7.0, 2.4, font=13)
 add_image(s, os.path.join(BENCH, "part2_charts.png"), 8.6, 1.7, 4.2)
 add_bullets(s, [
-    ("\u2022 Indicator values from both engines match to ~1e-6 (float32 rounding).", 0, False),
+    ("\u2022 Indicator values from both engines match to ~1e-4 (float32 rounding).", 0, False),
     ("\u2022 Polars is consistently faster (lazy/vectorized kernels, no Python lambdas).", 0, False),
     ("\u2022 Both feed identical NumPy arrays to scikit-learn.", 0, False),
 ], top=4.9, height=2.2)
@@ -221,11 +221,13 @@ add_bullets(s, [
     ("\u2022 SMA(10) \u2013 10-day simple moving average of close", 1, False),
     ("\u2022 MACD(12, 26, 9) \u2013 EMA12 \u2212 EMA26 plus 9-day signal line", 1, False),
     ("\u2022 RSI(14) \u2013 Wilder's relative strength index", 1, False),
-    ("Features: open, high, low, volume, SMA10, MACD, signal, RSI, lag-1 close, 1-day return", 0, False),
+    ("Features: open, high, low, volume, SMA10, MACD, signal, RSI, close, 1-day return \u2014 all lagged 1 day (no look-ahead)", 0, False),
     ("Models (predict next-day close for all 505 companies):", 0, True),
-    ("\u2022 Linear Regression with StandardScaler \u2014 fast baseline, global price scale", 1, False),
+    ("\u2022 Linear Regression with StandardScaler \u2014 fast, extrapolates linearly", 1, False),
     ("\u2022 Random Forest (120 trees, depth 20) \u2014 captures non-linear patterns", 1, False),
+    ("\u2022 Both trained on the 1-day log-return; forecast = close(t-1) \u00d7 e^r\u0302", 1, False),
     ("Backtest: first 80% of trading days train, last 20% test (chronological, no leakage)", 0, False),
+    ("All features lagged 1 day \u2192 only information available at close of day t-1 is used", 0, False),
 ])
 
 # ---------------------------------------------------------------- slide 8
@@ -239,7 +241,8 @@ add_table(s, rows, 1.2, 1.8, 6.2, 1.8, font=13)
 add_bullets(s, [
     (f"Train rows: {p2s['n_train']:,} \u2022 Test rows: {p2s['n_test']:,} \u2022 Split date: {p2s['split_date']}", 0, False),
     (f"Test period: {p2s['test_date_range'][0]} \u2192 {p2s['test_date_range'][1]}", 0, False),
-    ("Random Forest clearly outperforms Linear Regression.", 0, False),
+    ("Models are near-tied overall; per-ticker, LR wins on RMSE for 335/505 tickers, RF for 170.", 0, False),
+    ("Log-return target keeps RF stable on high-priced stocks (e.g. PCLN ~$1,880).", 0, False),
 ], left=1.2, top=4.0, width=10.8, height=2.6)
 fi = list(p2s["feature_importance_rf"].items())[:5]
 fi_txt = ", ".join(f"{k} ({v:.2f})" for k, v in fi)
@@ -247,8 +250,8 @@ s2 = add_slide("Part 2 \u2013 Feature importance (Random Forest)", "")
 add_bullets(s2, [
     ("Top-5 features:", 0, True),
     (fi_txt, 1, False),
-    ("\u2022 Yesterday's close dominates \u2014 prices are near-random-walk, as expected.", 1, False),
-    ("\u2022 Daily OHLC range adds most of the remaining signal.", 1, False),
+    ("\u2022 Yesterday's return, volume and the momentum indicators dominate.", 1, False),
+    ("\u2022 close(t-1) adds little beyond ret1 \u2014 near-random-walk behaviour.", 1, False),
     ("\u2022 Per-ticker RMSE / MAE / R\u00b2 are saved and shown in the dashboard.", 1, False),
 ])
 

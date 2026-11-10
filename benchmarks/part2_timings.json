@@ -1,15 +1,13 @@
 {
-  "_t": 430517.389095208,
-  "_label": "per_ticker_s",
-  "pandas_load_csv_s": 0.10406854201573879,
-  "pandas_indicators_s": 0.14854508300777525,
-  "pandas_features_s": 0.01750262500718236,
-  "polars_load_csv_s": 0.018839332973584533,
-  "polars_indicators_s": 0.028159541951026767,
-  "polars_features_s": 0.005183000001125038,
-  "split_and_prep_s": 0.018357374996412545,
-  "train_lr_s": 0.05422050005290657,
-  "train_rf_s": 40.23972750001121,
-  "predict_s": 0.3216806669952348,
-  "per_ticker_s": 0.3318835829850286
+  "pandas_load_csv_s": 0.10306691698497161,
+  "pandas_indicators_s": 0.14326149999396876,
+  "pandas_features_s": 0.03051879198756069,
+  "polars_load_csv_s": 0.01751999999396503,
+  "polars_indicators_s": 0.026484416041057557,
+  "polars_features_s": 0.009714708023238927,
+  "split_and_prep_s": 0.02483616699464619,
+  "train_lr_s": 0.04256366699701175,
+  "train_rf_s": 67.01547399995616,
+  "predict_s": 0.09892050002235919,
+  "per_ticker_s": 0.3605429169838317
 }

@@ -8,9 +8,14 @@ Part 2: Manipulating, analyzing data and building models.
      - SMA(10)   simple moving average of close
      - MACD(12,26,9) + signal line
      - RSI(14)   Wilder's relative strength index
-   plus two engineered features (1-day lag close, 1-day return).
+   plus a 1-day return column.
+   For the next-day forecast, EVERY feature is then lagged by one day so
+   the models only use information available at the close of day t-1 to
+   predict the close of day t (no look-ahead leakage).
 3. Trains two models to predict the next-day closing price for every
-   company, using an 80/20 chronological (backtesting) split:
+   company, using an 80/20 chronological (backtesting) split. The models
+   predict the one-day log-return; the dollar forecast is
+   close(t-1) * exp(r_hat):
      - Linear Regression (with StandardScaler)
      - Random Forest Regressor
 4. Saves everything the dashboard (Part 3) needs.
@@ -44,9 +49,14 @@ DATA_PATH = os.path.join(BASE_DIR, "data", "all_stocks_5yr.csv")
 BENCH_DIR = os.path.join(BASE_DIR, "benchmarks")
 
 FEATURES = [
+    "open_l1", "high_l1", "low_l1", "volume_l1",
+    "sma10_l1", "macd_l1", "macd_signal_l1", "rsi_l1",
+    "close_l1", "ret1_l1",
+]
+BASE_COLS = [
     "open", "high", "low", "volume",
     "sma10", "macd", "macd_signal", "rsi",
-    "close_lag1", "ret1",
+    "close", "ret1",
 ]
 TARGET = "close"
 
@@ -123,8 +133,10 @@ def add_indicators_pandas(df: pd.DataFrame) -> pd.DataFrame:
 def add_features_pandas(df: pd.DataFrame) -> pd.DataFrame:
     tic("pandas_features_s")
     g = df.groupby("name", sort=False)
-    df["close_lag1"] = g["close"].shift(1)
     df["ret1"] = g["close"].pct_change()
+    # next-day prediction => every feature must be known at close of day t-1
+    for c in BASE_COLS:
+        df[f"{c}_l1"] = g[c].shift(1)
     df = df.dropna(subset=FEATURES + [TARGET]).reset_index(drop=True)
     toc()
     return df
@@ -190,9 +202,10 @@ def add_indicators_polars(df: pl.DataFrame) -> pl.DataFrame:
 
 def add_features_polars(df: pl.DataFrame) -> pl.DataFrame:
     tic("polars_features_s")
+    df = df.with_columns(pl.col("close").pct_change().over("name").alias("ret1"))
+    # next-day prediction => every feature must be known at close of day t-1
     df = df.with_columns(
-        pl.col("close").shift(1).over("name").alias("close_lag1"),
-        pl.col("close").pct_change().over("name").alias("ret1"),
+        [pl.col(c).shift(1).over("name").alias(f"{c}_l1") for c in BASE_COLS]
     ).drop_nulls(subset=FEATURES + [TARGET])
     toc()
     return df
@@ -202,7 +215,8 @@ def add_features_polars(df: pl.DataFrame) -> pl.DataFrame:
 # Verification
 # ----------------------------------------------------------------------
 def verify(pd_df: pd.DataFrame, pl_df: pl.DataFrame) -> dict:
-    cols = ["sma10", "macd", "macd_signal", "macd_hist", "rsi", "close_lag1", "ret1"]
+    cols = ["sma10", "macd", "macd_signal", "macd_hist", "rsi", "ret1",
+            "close_l1", "ret1_l1", "rsi_l1"]
     pl_pd = pl_df.select(["name", "date"] + cols).to_pandas()
     merged = pd_df[["name", "date"] + cols].merge(
         pl_pd, on=["name", "date"], suffixes=("_pd", "_pl")
@@ -225,9 +239,12 @@ def build_models(df: pd.DataFrame):
     train = df[df["date"] < split_date]
     test = df[df["date"] >= split_date]
     X_train = train[FEATURES].to_numpy(dtype=np.float64)
-    y_train = train[TARGET].to_numpy(dtype=np.float64)
     X_test = test[FEATURES].to_numpy(dtype=np.float64)
-    y_test = test[TARGET].to_numpy(dtype=np.float64)
+    # Model the log-return (standard for prices: stationary, comparable across
+    # tickers); the dollar prediction is  close(t-1) * exp(r_hat).
+    y_train = np.log(train[TARGET].to_numpy()) - np.log(train["close_l1"].to_numpy())
+    close_test = test[TARGET].to_numpy(dtype=np.float64)
+    close_l1_test = test["close_l1"].to_numpy(dtype=np.float64)
     toc()
 
     # ----- Linear Regression (scaled) -----
@@ -246,8 +263,8 @@ def build_models(df: pd.DataFrame):
     toc()
 
     tic("predict_s")
-    pred_lr = lr.predict(X_test)
-    pred_rf = rf.predict(X_test)
+    pred_lr = close_l1_test * np.exp(lr.predict(X_test))
+    pred_rf = close_l1_test * np.exp(rf.predict(X_test))
     toc()
 
     def overall_metrics(y, p):
@@ -259,9 +276,10 @@ def build_models(df: pd.DataFrame):
 
     model_summary = {
         "overall": {
-            "LinearRegression": overall_metrics(y_test, pred_lr),
-            "RandomForest": overall_metrics(y_test, pred_rf),
+            "LinearRegression": overall_metrics(close_test, pred_lr),
+            "RandomForest": overall_metrics(close_test, pred_rf),
         },
+        "target": "log-return: log(close(t)) - log(close(t-1)); dollar prediction = close(t-1) * exp(r_hat)",
         "n_train": int(len(X_train)),
         "n_test": int(len(X_test)),
         "train_date_range": [str(train["date"].min()), str(train["date"].max())],
@@ -277,8 +295,8 @@ def build_models(df: pd.DataFrame):
             "RSI14": "Wilder relative strength index (14-day)",
         },
         "models": {
-            "LinearRegression": "Ridge-free OLS with StandardScaler",
-            "RandomForest": "120 trees, max_depth=20, min_samples_leaf=5",
+            "LinearRegression": "OLS on scaled lagged features, log-return target",
+            "RandomForest": "120 trees, max_depth=20, min_samples_leaf=5, log-return target",
         },
     }
 
@@ -290,9 +308,12 @@ def build_models(df: pd.DataFrame):
 
     rows = []
     last_rows = df.groupby("name", sort=False).tail(1)
-    X_last = last_rows[FEATURES].to_numpy(dtype=np.float64)
-    last_pred_lr = lr.predict(X_last)
-    last_pred_rf = rf.predict(X_last)
+    # features of the last trading day (2018-02-07) -> forecast for 2018-02-08
+    X_last = last_rows[BASE_COLS].rename(columns={c: f"{c}_l1" for c in BASE_COLS})
+    X_last = X_last[FEATURES].to_numpy(dtype=np.float64)
+    last_close_vals = last_rows["close"].to_numpy(dtype=np.float64)
+    last_pred_lr = last_close_vals * np.exp(lr.predict(X_last))
+    last_pred_rf = last_close_vals * np.exp(rf.predict(X_last))
     last_map_lr = dict(zip(last_rows["name"], last_pred_lr))
     last_map_rf = dict(zip(last_rows["name"], last_pred_rf))
 
@@ -308,12 +329,21 @@ def build_models(df: pd.DataFrame):
             "mae_rf": float(mean_absolute_error(y, grp["pred_rf"].to_numpy())),
             "r2_rf": float(r2_score(y, grp["pred_rf"].to_numpy())),
             "last_date": str(grp["date"].max()),
-            "last_close": float(grp[TARGET].max()),
+            "last_close": float(grp.sort_values("date")[TARGET].iloc[-1]),
             "next_pred_lr": float(last_map_lr[name]),
             "next_pred_rf": float(last_map_rf[name]),
         })
     metrics_df = pd.DataFrame(rows)
     toc()
+
+    # consistency check: overall RMSE vs per-ticker (weighted by n_test)
+    check = np.sqrt(np.average(metrics_df[["rmse_lr", "rmse_rf"]] ** 2,
+                               weights=metrics_df["n_test"], axis=0))
+    print(f"  consistency check overall RMSE [LR, RF] = [{check[0]:.3f}, "
+          f"{check[1]:.3f}]")
+    model_summary["overall_from_per_ticker"] = {
+        "rmse_lr": float(check[0]), "rmse_rf": float(check[1]),
+    }
 
     return test_preds, metrics_df, model_summary
 
@@ -326,7 +356,7 @@ def save_outputs(test_preds: pd.DataFrame, metrics_df: pd.DataFrame, summary: di
     pl.from_pandas(metrics_df).write_parquet(os.path.join(BENCH_DIR, "ticker_metrics.parquet"))
 
     with open(os.path.join(BENCH_DIR, "part2_timings.json"), "w") as f:
-        json.dump(timings, f, indent=2)
+        json.dump({k: v for k, v in timings.items() if not k.startswith("_")}, f, indent=2)
     with open(os.path.join(BENCH_DIR, "part2_summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
     print("Saved predictions.parquet, ticker_metrics.parquet, part2_timings.json, part2_summary.json")
