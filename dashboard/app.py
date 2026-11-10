@@ -201,7 +201,7 @@ metrics = load_metrics()
 # ---------------- sidebar ----------------
 with st.sidebar:
     st.title("\U0001F4C8 S&P 500 Predictor")
-    st.caption("CSIS 4260 - Assignment 1 - Part 3")
+    st.caption("CSIS 4260 \u2014 Assignment 1 \u2014 Part 3 \u00b7 Jaismine Kaur")
     st.markdown("---")
     search = st.text_input("\U0001F50D Search ticker", value="", placeholder="e.g. AAPL")
     filtered = [t for t in tickers if search.upper() in t]
@@ -220,15 +220,15 @@ with st.sidebar:
     )
     st.markdown("---")
     st.markdown(
-        "**Data**: 505 S&P 500 companies, 2013-02-08 to 2018-02-07 "
-        "(619,040 rows). 80/20 chronological split for backtesting."
+        "**The data**: 505 S&P 500 companies, 2013-02-08 to 2018-02-07 "
+        "(619,040 rows). Models are backtested on an 80/20 chronological split."
     )
     st.markdown(
-        "**Models** (trained on all companies):\n"
+        "**The models** (trained on every company):\n"
         "- Linear Regression (scaled features)\n"
         "- Random Forest (120 trees)"
     )
-    st.caption("Benchmarks & analysis: see README.md")
+    st.caption("The full benchmarks and reasoning live in README.md")
 
 # ---------------- data for selected ticker ----------------
 history = load_ticker_history(ticker)

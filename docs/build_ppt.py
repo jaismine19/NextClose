@@ -129,7 +129,7 @@ p.text = "Storing, Analyzing & Visualizing S&P 500 Stock Data"
 p.font.size = Pt(24)
 p.font.color.rgb = ACCENT
 p = tf.add_paragraph()
-p.text = "Jazmine Gill \u2022 Dashboard screenshots & benchmark results"
+p.text = "Jaismine Kaur \u2022 screenshots, benchmarks & what I found"
 p.font.size = Pt(16)
 p.font.color.rgb = GREY
 p = tf.add_paragraph()
@@ -138,19 +138,19 @@ p.font.size = Pt(14)
 p.font.color.rgb = GREY
 
 # ---------------------------------------------------------------- slide 2
-s = add_slide("Project structure & environment", "How to reproduce every number in this deck")
+s = add_slide("How everything is set up", "Every number in this deck can be reproduced")
 add_bullets(s, [
     ("\u2022 Python 3.13 virtual environment (.venv) \u2014 dependencies pinned in requirements.txt", 0, False),
-    ("   pandas 2.x, polars 1.x, pyarrow, scikit-learn, streamlit, plotly, playwright, python-pptx", 1, False),
+    ("   pandas 3.1, polars 2.1, pyarrow, scikit-learn, streamlit, plotly, playwright, python-pptx", 1, False),
     ("\u2022 part1_storage_benchmark.py \u2014 CSV vs Parquet (snappy/zstd/gzip) at 1x/10x/100x", 0, False),
     ("\u2022 part2_analysis_models.py \u2014 pandas vs polars, 3 indicators, 2 prediction models", 0, False),
     ("\u2022 dashboard/app.py \u2014 Streamlit dashboard (ticker search + prediction charts)", 0, False),
-    ("\u2022 docs/ \u2014 screenshot generator (Playwright) and this slide deck", 0, False),
-    ("\u2022 10x/100x datasets are simulated by tiling and deleted after benchmarking", 0, False),
+    ("\u2022 docs/ \u2014 the Playwright screenshot script and this deck", 0, False),
+    ("\u2022 10x/100x datasets are simulated by tiling, then deleted \u2014 nothing big is ever stored", 0, False),
 ])
 
 # ---------------------------------------------------------------- slide 3
-s = add_slide("Part 1 \u2013 Storage benchmark results (sizes)",
+s = add_slide("Part 1 \u2013 How much space does each format need?",
               "CSV vs Parquet with snappy / zstd / gzip compression")
 rows = [["Scale", "Rows", "CSV (MB)", "Parquet snappy (MB)", "Parquet zstd (MB)",
          "Parquet gzip (MB)"]]
@@ -165,11 +165,12 @@ for r in p1:
 add_table(s, rows, 1.2, 1.8, 10.9, 2.0, font=13)
 add_bullets(s, [
     ("\u2022 Parquet is ~3.5x smaller than CSV at every scale (29.6 MB \u2192 8.5 MB at 1x).", 0, False),
-    ("\u2022 zstd/gzip save ~17% more space than snappy at a small CPU cost.", 0, False),
+    ("\u2022 zstd and gzip save ~17% more space than snappy, at a small CPU cost.", 0, False),
+    ("\u2022 At 100x this is the difference between 3.0 GB and 0.85 GB on disk.", 0, False),
 ], top=4.4, height=2.4)
 
 # ---------------------------------------------------------------- slide 4
-s = add_slide("Part 1 \u2013 Storage benchmark results (write & read)",
+s = add_slide("Part 1 \u2013 How fast is each format? (write & read)",
               "Wall-clock seconds; reads measured with pandas (polars shown for reference)")
 rows = [["Scale", "CSV write", "CSV read (pd)", "PQ zstd write", "PQ zstd read (pd)",
          "PQ zstd read (pl)"]]
@@ -186,16 +187,16 @@ add_table(s, rows, 1.2, 1.8, 10.9, 2.0, font=13)
 add_bullets(s, [
     ("\u2022 At 100x: Parquet/zstd writes 9x faster (6.6s vs 60.9s) and reads ~9x faster (1.2s vs 10.3s).", 0, False),
     ("\u2022 Parquet is columnar + compressed \u2192 far less I/O, fewer bytes to parse, no type inference.", 0, False),
-    ("\u2022 Recommendation: Parquet + zstd for analytics; CSV stays as the ingestion/source format.", 0, False),
+    ("\u2022 My pick: Parquet + zstd for analytics; CSV stays as the ingestion/source format.", 0, False),
 ], top=4.4, height=2.4)
 
 # ---------------------------------------------------------------- slide 5
-s = add_slide("Part 1 \u2013 Benchmark charts")
+s = add_slide("Part 1 \u2013 The full picture")
 add_image(s, os.path.join(BENCH, "part1_charts.png"), 0.9, 1.5, 11.5)
 
 # ---------------------------------------------------------------- slide 6
-s = add_slide("Part 2 \u2013 Pandas vs Polars (data prep)",
-              "Same indicator formulas in both engines, results verified identical")
+s = add_slide("Part 2 \u2013 Pandas vs Polars on the data prep",
+              "Same indicator formulas in both engines; results verified identical")
 rows = [["Stage", "pandas (s)", "polars (s)", "Speedup"]]
 for stage, pretty in [("load_csv_s", "Load CSV"), ("indicators_s", "3 indicators"),
                       ("features_s", "Lags + cleanup")]:
@@ -208,8 +209,8 @@ rows.append(["Total", fmt_s(pd_total), fmt_s(pl_total), f"{pd_total / pl_total:.
 add_table(s, rows, 1.2, 1.8, 7.0, 2.4, font=13)
 add_image(s, os.path.join(BENCH, "part2_charts.png"), 8.6, 1.7, 4.2)
 add_bullets(s, [
-    ("\u2022 Indicator values from both engines match to ~1e-4 (float32 rounding).", 0, False),
-    ("\u2022 Polars is consistently faster (lazy/vectorized kernels, no Python lambdas).", 0, False),
+    ("\u2022 Both engines produce the same numbers (match to ~1e-4, float32 rounding).", 0, False),
+    ("\u2022 Polars is ~5x faster because it vectorizes everything \u2014 no Python callbacks per group.", 0, False),
     ("\u2022 Both feed identical NumPy arrays to scikit-learn.", 0, False),
 ], top=4.9, height=2.2)
 
@@ -217,21 +218,20 @@ add_bullets(s, [
 s = add_slide("Part 2 \u2013 Indicators & models",
               "3 technical indicators, 2 prediction algorithms, 80/20 chronological split")
 add_bullets(s, [
-    ("Indicators added per ticker:", 0, True),
-    ("\u2022 SMA(10) \u2013 10-day simple moving average of close", 1, False),
-    ("\u2022 MACD(12, 26, 9) \u2013 EMA12 \u2212 EMA26 plus 9-day signal line", 1, False),
-    ("\u2022 RSI(14) \u2013 Wilder's relative strength index", 1, False),
+    ("Indicators I added per ticker:", 0, True),
+    ("\u2022 SMA(10) \u2014 10-day simple moving average of close", 1, False),
+    ("\u2022 MACD(12, 26, 9) \u2014 EMA12 \u2212 EMA26 plus 9-day signal line", 1, False),
+    ("\u2022 RSI(14) \u2014 Wilder's relative strength index", 1, False),
     ("Features: open, high, low, volume, SMA10, MACD, signal, RSI, close, 1-day return \u2014 all lagged 1 day (no look-ahead)", 0, False),
-    ("Models (predict next-day close for all 505 companies):", 0, True),
+    ("The models (predict next-day close for all 505 companies):", 0, True),
     ("\u2022 Linear Regression with StandardScaler \u2014 fast, extrapolates linearly", 1, False),
-    ("\u2022 Random Forest (120 trees, depth 20) \u2014 captures non-linear patterns", 1, False),
+    ("\u2022 Random Forest (120 trees, depth 20) \u2014 catches non-linear patterns", 1, False),
     ("\u2022 Both trained on the 1-day log-return; forecast = close(t-1) \u00d7 e^r\u0302", 1, False),
-    ("Backtest: first 80% of trading days train, last 20% test (chronological, no leakage)", 0, False),
-    ("All features lagged 1 day \u2192 only information available at close of day t-1 is used", 0, False),
+    ("Backtest: first 80% of trading days train, last 20% test \u2014 chronological, so no leakage", 0, False),
 ])
 
 # ---------------------------------------------------------------- slide 8
-s = add_slide("Part 2 \u2013 Model accuracy (test set, all companies)")
+s = add_slide("Part 2 \u2013 How accurate are the models? (test set, all companies)")
 overall = p2s["overall"]
 rows = [["Model", "RMSE ($)", "MAE ($)", "R\u00b2"]]
 for name in ["LinearRegression", "RandomForest"]:
@@ -241,23 +241,23 @@ add_table(s, rows, 1.2, 1.8, 6.2, 1.8, font=13)
 add_bullets(s, [
     (f"Train rows: {p2s['n_train']:,} \u2022 Test rows: {p2s['n_test']:,} \u2022 Split date: {p2s['split_date']}", 0, False),
     (f"Test period: {p2s['test_date_range'][0]} \u2192 {p2s['test_date_range'][1]}", 0, False),
-    ("Models are near-tied overall; per-ticker, LR wins on RMSE for 335/505 tickers, RF for 170.", 0, False),
-    ("Log-return target keeps RF stable on high-priced stocks (e.g. PCLN ~$1,880).", 0, False),
+    ("The two models are nearly tied; per-ticker, LR wins on RMSE for 335/505 tickers, RF for 170.", 0, False),
+    ("Training the log-return (not the price) keeps RF stable on high-priced stocks like PCLN (~$1,880).", 0, False),
 ], left=1.2, top=4.0, width=10.8, height=2.6)
 fi = list(p2s["feature_importance_rf"].items())[:5]
 fi_txt = ", ".join(f"{k} ({v:.2f})" for k, v in fi)
-s2 = add_slide("Part 2 \u2013 Feature importance (Random Forest)", "")
+s2 = add_slide("Part 2 \u2013 What the Random Forest actually learned", "")
 add_bullets(s2, [
     ("Top-5 features:", 0, True),
     (fi_txt, 1, False),
-    ("\u2022 Yesterday's return, volume and the momentum indicators dominate.", 1, False),
-    ("\u2022 close(t-1) adds little beyond ret1 \u2014 near-random-walk behaviour.", 1, False),
-    ("\u2022 Per-ticker RMSE / MAE / R\u00b2 are saved and shown in the dashboard.", 1, False),
+    ("\u2022 Yesterday's return, volume and the momentum indicators do the work.", 1, False),
+    ("\u2022 close(t-1) adds little beyond ret1 \u2014 classic near-random-walk prices.", 1, False),
+    ("\u2022 Every ticker's RMSE / MAE / R\u00b2 is saved and shown in the dashboard.", 1, False),
 ])
 
 # ---------------------------------------------------------------- slide 9
-s = add_slide("Part 3 \u2013 Dashboard library research",
-              "Streamlit vs Dash vs Reflex")
+s = add_slide("Part 3 \u2013 Picking a dashboard library",
+              "Streamlit vs Dash vs Reflex \u2014 and why I chose Streamlit")
 add_table(s, [
     ["Library", "Language model", "Learning curve", "Interactive charts", "Deployment"],
     ["Streamlit", "Python script, top-down reruns", "Very low", "Plotly native", "Easy (Community Cloud)"],
@@ -265,16 +265,16 @@ add_table(s, [
     ["Reflex", "Compiles Python to React", "Steeper", "Custom components", "Younger ecosystem"],
 ], 0.9, 1.7, 11.5, 2.2, font=12)
 add_bullets(s, [
-    ("Chose Streamlit:", 0, True),
-    ("\u2022 Fastest to build a ticker-search + charts app; caching via @st.cache_data.", 1, False),
-    ("\u2022 Native Plotly support \u2192 candlestick-style panels, zoom, hover.", 1, False),
-    ("\u2022 Free, one-command hosting for the grader to verify.", 1, False),
-    ("Run: .venv/bin/streamlit run dashboard/app.py", 0, False),
+    ("Why Streamlit won me over:", 0, True),
+    ("\u2022 Fastest way to build a ticker-search + charts app; caching via @st.cache_data.", 1, False),
+    ("\u2022 Plotly works out of the box \u2192 technical panels, zoom, hover tooltips.", 1, False),
+    ("\u2022 Free one-command hosting, so the grader can verify it easily.", 1, False),
+    ("Run it: .venv/bin/streamlit run dashboard/app.py", 0, False),
 ], top=4.3, height=2.6)
 
 # ---------------------------------------------------------------- slides 10-13
 shots = [
-    ("dashboard_home.png", "Dashboard \u2013 landing view"),
+    ("dashboard_home.png", "Dashboard \u2013 the landing view"),
     ("aapl_rf.png", "AAPL \u2013 Random Forest model"),
     ("msft_rf.png", "MSFT \u2013 Random Forest model"),
     ("googl_lr.png", "GOOGL \u2013 Linear Regression model"),
@@ -286,7 +286,7 @@ for fname, caption in shots:
         add_image(s, path, 1.15, 1.35, 11.0)
 
 # ---------------------------------------------------------------- final slide
-s = add_slide("How to run & repository", "")
+s = add_slide("How to run it & where everything lives", "")
 add_bullets(s, [
     ("python3 -m venv .venv && .venv/bin/pip install -r requirements.txt", 0, False),
     (".venv/bin/python part1_storage_benchmark.py      # Part 1 benchmarks", 0, False),
@@ -294,7 +294,7 @@ add_bullets(s, [
     (".venv/bin/streamlit run dashboard/app.py         # Part 3 dashboard", 0, False),
     (".venv/bin/python docs/build_ppt.py               # rebuild this deck", 0, False),
     ("Repository: https://github.com/jaismine19/CSIS4260_Assignment1 (public \u2014 read access; shared with saleemn@douglascollege.ca)", 0, False),
-    ("Full analysis and reasoning: README.md", 0, False),
+    ("The full write-up and reasoning: README.md", 0, False),
 ])
 
 prs.save(OUT_PPTX)
