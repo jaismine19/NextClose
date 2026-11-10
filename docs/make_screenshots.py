@@ -9,11 +9,14 @@ Prerequisites:
     3. Run this script:
            .venv/bin/python docs/make_screenshots.py
 
-Screenshots are saved to docs/screenshots/ and used by docs/build_ppt.py.
+For each target we save a viewport screenshot (used in the slide deck) and,
+for the deep-dive ticker, additional screenshots of the backtest and
+diagnostics sections.
+
+Output: docs/screenshots/*.png (used by docs/build_ppt.py)
 """
 
 import os
-import sys
 import time
 
 from playwright.sync_api import sync_playwright
@@ -28,25 +31,42 @@ TARGETS = [
     ("googl_lr", "?ticker=GOOGL&model=Linear%20Regression", "GOOGL - Linear Regression"),
 ]
 
+# extra section shots for the deep-dive ticker (AAPL)
+SECTION_SHOTS = [
+    ("aapl_backtest", "Model backtest", "AAPL - backtest section"),
+    ("aapl_diagnostics", "Diagnostics", "AAPL - diagnostics section"),
+]
+
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(
-            viewport={"width": 1440, "height": 2000}, device_scale_factor=1.5
+            viewport={"width": 1440, "height": 1700}, device_scale_factor=1.5
         )
         for name, query, caption in TARGETS:
             url = BASE_URL + query
             print(f"-> {url}")
             page.goto(url, wait_until="networkidle", timeout=90_000)
-            # wait for the app to finish its first (cached) data load
             page.wait_for_selector("div[data-testid='stPlotlyChart']", timeout=120_000)
             page.wait_for_timeout(6000)
-            path = os.path.join(OUT_DIR, f"{name}.png")
-            page.screenshot(path=path, full_page=True)
-            print(f"   saved {path}")
+            page.screenshot(path=os.path.join(OUT_DIR, f"{name}.png"))
+            print(f"   saved {name}.png")
             time.sleep(1)
+
+        # section shots for AAPL
+        page.goto(BASE_URL + "?ticker=AAPL&model=Random%20Forest",
+                  wait_until="networkidle", timeout=90_000)
+        page.wait_for_selector("div[data-testid='stPlotlyChart']", timeout=120_000)
+        page.wait_for_timeout(6000)
+        for name, section_text, caption in SECTION_SHOTS:
+            page.get_by_text(section_text, exact=False).first.scroll_into_view_if_needed()
+            page.wait_for_timeout(2500)
+            page.screenshot(path=os.path.join(OUT_DIR, f"{name}.png"))
+            print(f"   saved {name}.png")
+            time.sleep(1)
+
         browser.close()
     print("All screenshots done.")
 

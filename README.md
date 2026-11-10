@@ -274,13 +274,18 @@ value for this particular dashboard.
 
 ### What the dashboard shows
 
-* Sidebar: **ticker search + selection** (all 505 companies are available) and a
-  model choice (Random Forest / Linear Regression / both).
-* Metric cards: per-ticker **RMSE, MAE and R²** on the test period, plus the
-  **next-day forecast** from each model.
-* Charts: the full price history with **SMA(10), MACD and RSI(14)** panels, the
-  backtest window (actual vs predicted close), a predicted-vs-actual scatter with
-  an error histogram, and a table of the recent rows with their features.
+* **Hero header** with the ticker, date range, last close + day change, 52-week
+  low/high and average volume.
+* Sidebar: **ticker search + selection** (all 505 companies are available), a
+  model choice (Random Forest / Linear Regression / both), and a
+  **zoom window slider** for the backtest charts.
+* Metric cards per model: **RMSE, MAE, MAPE, R², directional accuracy** (how often
+  the model got the move direction right) and the **next-day forecast**.
+* Charts: a **candlestick** chart with SMA(10)/SMA(30) and volume (with 1M/6M/1Y
+  range buttons), **MACD and RSI(14)** panels, the backtest window (actual vs
+  predicted), a **rolling 20-day RMSE**, a predicted-vs-actual scatter with error
+  histogram, and the **Random Forest feature importance**.
+* A one-click **CSV download** of the predictions and a table of recent rows.
 
 Screenshots of the running app are in `docs/screenshots/` and assembled into
 `docs/CSIS4260_Assignment1_Dashboard_Screenshots.pptx`.

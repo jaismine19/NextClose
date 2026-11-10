@@ -267,15 +267,19 @@ add_table(s, [
 add_bullets(s, [
     ("Why Streamlit won me over:", 0, True),
     ("\u2022 Fastest way to build a ticker-search + charts app; caching via @st.cache_data.", 1, False),
-    ("\u2022 Plotly works out of the box \u2192 technical panels, zoom, hover tooltips.", 1, False),
+    ("\u2022 Plotly works out of the box \u2192 candlesticks, zoom, hover tooltips.", 1, False),
     ("\u2022 Free one-command hosting, so the grader can verify it easily.", 1, False),
+    ("What's inside: candlestick + SMA/MACD/RSI panels, MAPE & directional accuracy,", 0, False),
+    ("rolling RMSE, feature importance, zoomable backtest, CSV download.", 0, False),
     ("Run it: .venv/bin/streamlit run dashboard/app.py", 0, False),
-], top=4.3, height=2.6)
+], top=4.3, height=2.8)
 
-# ---------------------------------------------------------------- slides 10-13
+# ---------------------------------------------------------------- slides 10-15
 shots = [
     ("dashboard_home.png", "Dashboard \u2013 the landing view"),
-    ("aapl_rf.png", "AAPL \u2013 Random Forest model"),
+    ("aapl_rf.png", "AAPL \u2013 hero stats, metric cards & candlestick chart (Random Forest)"),
+    ("aapl_backtest.png", "AAPL \u2013 backtest, rolling RMSE & feature importance"),
+    ("aapl_diagnostics.png", "AAPL \u2013 diagnostics, downloads & data table"),
     ("msft_rf.png", "MSFT \u2013 Random Forest model"),
     ("googl_lr.png", "GOOGL \u2013 Linear Regression model"),
 ]
@@ -283,7 +287,7 @@ for fname, caption in shots:
     path = os.path.join(SHOTS, fname)
     if os.path.exists(path):
         s = add_slide(caption)
-        add_image(s, path, 1.15, 1.35, 11.0)
+        add_image(s, path, 4.15, 1.55, width=5.0)
 
 # ---------------------------------------------------------------- final slide
 s = add_slide("How to run it & where everything lives", "")
