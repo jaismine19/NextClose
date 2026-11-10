@@ -106,6 +106,19 @@ def add_image(slide, path, left, top, width=None, height=None):
                              Inches(height) if height else None)
 
 
+def fit_image(slide, path, left, top, max_w, max_h):
+    """Scale a picture to fit inside a box and center it within that box."""
+    from PIL import Image
+    with Image.open(path) as im:
+        w_px, h_px = im.size
+    scale = min(max_w / w_px, max_h / h_px)
+    w, h = w_px * scale, h_px * scale
+    x = left + (max_w - w) / 2
+    y = top + (max_h - h) / 2
+    slide.shapes.add_picture(path, Inches(x), Inches(y), Inches(w), Inches(h))
+    return w, h
+
+
 def fmt_s(x):
     try:
         v = float(x)
@@ -276,18 +289,46 @@ add_bullets(s, [
 
 # ---------------------------------------------------------------- slides 10-15
 shots = [
-    ("dashboard_home.png", "Dashboard \u2013 the landing view"),
-    ("aapl_rf.png", "AAPL \u2013 hero stats, metric cards & candlestick chart (Random Forest)"),
-    ("aapl_backtest.png", "AAPL \u2013 backtest, rolling RMSE & feature importance"),
-    ("aapl_diagnostics.png", "AAPL \u2013 diagnostics, downloads & data table"),
-    ("msft_rf.png", "MSFT \u2013 Random Forest model"),
-    ("googl_lr.png", "GOOGL \u2013 Linear Regression model"),
+    ("dashboard_home.png", "Dashboard \u2013 landing view", [
+        "Landing view with the default ticker",
+        "Hero stats: last close, 52-week range, volume",
+        "Backtest metric cards (RMSE / MAE / MAPE / R\u00b2 / direction)",
+        "Candlestick with SMA(10) / SMA(30) and volume",
+    ]),
+    ("aapl_rf.png", "AAPL \u2013 hero, metrics & candlestick", [
+        "Selected via search + ticker dropdown",
+        "Per-model performance cards",
+        "Next-day forecast with % move vs last close",
+        "Candlestick chart with 1M / 6M / 1Y zoom buttons",
+    ]),
+    ("aapl_backtest.png", "AAPL \u2013 backtest & error analysis", [
+        "Actual vs predicted close (test period)",
+        "Rolling 20-day RMSE per model",
+        "Random Forest feature importance (top 10)",
+        "Backtest zoom slider in the sidebar",
+    ]),
+    ("aapl_diagnostics.png", "AAPL \u2013 diagnostics & downloads", [
+        "Predicted vs actual scatter with perfect-fit line",
+        "Histogram of prediction errors",
+        "One-click CSV download of predictions",
+        "Recent rows with features & predictions",
+    ]),
+    ("msft_rf.png", "MSFT \u2013 Random Forest model", [
+        "Same layout for every one of the 505 tickers",
+        "Random Forest selected",
+    ]),
+    ("googl_lr.png", "GOOGL \u2013 Linear Regression model", [
+        "Same layout for every one of the 505 tickers",
+        "Linear Regression selected",
+    ]),
 ]
-for fname, caption in shots:
+for fname, caption, bullets in shots:
     path = os.path.join(SHOTS, fname)
     if os.path.exists(path):
         s = add_slide(caption)
-        add_image(s, path, 4.15, 1.55, width=5.0)
+        add_bullets(s, [("\u2022 " + b, 0, False) for b in bullets],
+                    left=0.8, top=2.0, width=5.9, height=4.6, size=16)
+        fit_image(s, path, left=6.9, top=1.8, max_w=5.9, max_h=5.5)
 
 # ---------------------------------------------------------------- final slide
 s = add_slide("How to run it & where everything lives", "")
