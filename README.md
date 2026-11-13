@@ -55,11 +55,7 @@ Then open http://localhost:8501. Search any ticker in the sidebar (for example
 `AAPL`). You can also jump straight to a ticker and model with a link:
 `/?ticker=AAPL&model=Random%20Forest`.
 
-### Regenerating the screenshots / slides
-```bash
-.venv/bin/python docs/make_screenshots.py   # needs the dashboard running on :8501
-.venv/bin/python docs/build_ppt.py          # rebuilds the PPTX deck
-```
+The finished dashboard screenshots and the slide deck are included in `docs/`.
 
 ---
 
@@ -300,8 +296,6 @@ CSIS4260_Assignment1/
 ├── part2_analysis_models.py           ← Part 2
 ├── dashboard/app.py                   ← Part 3 (Streamlit)
 ├── docs/
-│   ├── make_screenshots.py            ← Playwright screenshot generator
-│   ├── build_ppt.py                   ← PPTX builder
 │   ├── screenshots/                   ← dashboard screenshots
 │   └── CSIS4260_Assignment1_Dashboard_Screenshots.pptx
 ├── benchmarks/                        ← outputs (JSON metrics, parquet, charts)
